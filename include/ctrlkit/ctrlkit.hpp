@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cmath>
+#include <concepts>
 #include <numbers>
+#include <type_traits>
 
 namespace ctrlkit
 {
@@ -279,21 +281,41 @@ namespace ctrlkit
             lhs[0] * rhs[1] - lhs[1] * rhs[0]};
     }
 
+}
+
+namespace ctrlkit
+{
     // ------------------ 语法糖，只对外使用， 对内依旧使用稳定的std 库
 
     using Vec3f = Vec<float, 3>;
     using Vec3d = Vec<double, 3>;
 
-    // 用法：ctk::pi<float>、ctk::deg2rad<double>，或在模板内直接写 deg2rad<T>。
+    // 目前支持两种pi定义，看那种用的爽后续确定API
 
+    // 仅支持浮点类型的 pi, 不支持Vec，避免误用
     template <typename T>
+        requires std::floating_point<T>
     constexpr T pi = std::numbers::pi_v<T>;
 
-    template <typename T>
-    constexpr T deg2rad = std::numbers::pi_v<T> / T(180);
+    // 专门用于浮点数的 pi 常量
+    constexpr float pi_f = std::numbers::pi_v<float>;
+    constexpr double pi_d = std::numbers::pi_v<double>;
 
     template <typename T>
-    constexpr T rad2deg = T(180) / std::numbers::pi_v<T>;
+    constexpr T deg2rad(T deg)
+    {
+        using Scalar = scalar_t<T>;
+        static_assert(std::is_floating_point_v<Scalar>, "deg2rad: T must be a floating-point type");
+        return deg * std::numbers::pi_v<Scalar> / Scalar(180);
+    }
+
+    template <typename T>
+    constexpr T rad2deg(T rad)
+    {
+        using Scalar = scalar_t<T>;
+        static_assert(std::is_floating_point_v<Scalar>, "rad2deg: T must be a floating-point type");
+        return rad * Scalar(180) / std::numbers::pi_v<Scalar>;
+    }
 
 }
 

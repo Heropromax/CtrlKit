@@ -159,26 +159,12 @@ namespace ctrlkit
             cr * cp * sy - sr * sp * cy};
     }
 
-    // 从四元数转换为欧拉角（ZYX顺序 单位Degree）
-    template <typename T>
-    constexpr Vec<T, 3> Quat2EulerZYXDeg(const Quat<T> &q)
-    {
-        constexpr T rad2deg = T(180) / std::numbers::pi_v<T>;
-        const Vec<T, 3> eulerZYX = Quat2EulerZYX(q);
-        return Vec<T, 3>{eulerZYX[0] * rad2deg,
-                         eulerZYX[1] * rad2deg,
-                         eulerZYX[2] * rad2deg};
-    }
+}
 
-    // 从欧拉角（ZYX顺序 单位Degree）转换为四元数
-    template <typename T>
-    constexpr Quat<T> EulerZYXDeg2Quat(const Vec<T, 3> &eulerZYXDeg)
-    {
-        constexpr T deg2rad = std::numbers::pi_v<T> / T(180);
-        const Vec<T, 3> eulerZYX{eulerZYXDeg[0] * deg2rad,
-                                 eulerZYXDeg[1] * deg2rad,
-                                 eulerZYXDeg[2] * deg2rad};
-        return EulerZYX2Quat(eulerZYX);
-    }
+namespace ctrlkit
+{
+    // ------------------ 语法糖，只对外使用， 对内依旧使用稳定的std 库
+    using Quatf = Quat<float>;
+    using Quatd = Quat<double>;
 
 }

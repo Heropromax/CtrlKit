@@ -121,12 +121,31 @@ namespace
         static_assert(std::is_same_v<ctk::scalar_t<double>, double>);
         static_assert(std::is_same_v<ctk::scalar_t<ctk::Vec<double, 4>>, double>);
 
-        // 变量模板常量：类型自动适配（无需 _f / _d 后缀）
-        static_assert(std::is_same_v<std::remove_cv_t<decltype(ctk::deg2rad<float>)>, float>);
-        static_assert(std::is_same_v<std::remove_cv_t<decltype(ctk::deg2rad<double>)>, double>);
+        // 角度常量：变量模板 pi<T>（仅标量）与 pi_f / pi_d 常量
+        static_assert(std::is_same_v<std::remove_cv_t<decltype(ctk::pi<float>)>, float>);
+        static_assert(std::is_same_v<std::remove_cv_t<decltype(ctk::pi<double>)>, double>);
         static_assert(ctk::pi<float> > 3.14f && ctk::pi<float> < 3.15f);
-        static_assert(ctk::rad2deg<float> > 57.2f && ctk::rad2deg<float> < 57.4f);
-        check(approx(ctk::deg2rad<double> * 180.0, ctk::pi<double>), "deg2rad * 180 == pi");
+        static_assert(ctk::pi<double> > 3.14159 && ctk::pi<double> < 3.14160);
+        static_assert(ctk::pi_f == ctk::pi<float>);
+        static_assert(ctk::pi_d == ctk::pi<double>);
+
+        // deg2rad / rad2deg：标量（同一函数同时适配 float / double）
+        check(approx(ctk::deg2rad(180.0f), ctk::pi<float>), "deg2rad(180) == pi (float)");
+        check(approx(ctk::deg2rad(90.0), ctk::pi<double> / 2.0), "deg2rad(90) == pi/2 (double)");
+        check(approx(ctk::rad2deg(ctk::pi<double>), 180.0), "rad2deg(pi) == 180 (double)");
+        check(approx(ctk::rad2deg(ctk::pi<float> / 4.0f), 45.0f), "rad2deg(pi/4) == 45 (float)");
+
+        // deg2rad / rad2deg：Vec（逐元素广播，三轴共用同一换算）
+        const V3 deg_vec{0.0f, 90.0f, 180.0f};
+        check(approx_vec(ctk::deg2rad(deg_vec), V3{0.0f, ctk::pi<float> / 2.0f, ctk::pi<float>}), "deg2rad(Vec)");
+        check(approx_vec(ctk::rad2deg(ctk::deg2rad(deg_vec)), deg_vec, 1e-3f),
+              "deg2rad/rad2deg round trip (Vec)");
+
+        // 编译期求值：角度换算
+        constexpr float half_turn = ctk::deg2rad(180.0f);
+        constexpr float quarter_turn = ctk::rad2deg(ctk::pi<float> / 2.0f);
+        static_assert(half_turn > 3.14f && half_turn < 3.15f);
+        static_assert(quarter_turn > 89.9f && quarter_turn < 90.1f);
 
         // 编译期求值（constexpr）
         constexpr V3 ca{1, 2, 3};
@@ -231,9 +250,11 @@ namespace
         check(approx_vec(ctk::Quat2EulerZYX(ctk::EulerZYX2Quat(euler_in)), euler_in, 1e-4f),
               "Euler round trip (rad)");
 
+        // 度数版不再单列函数：用 deg2rad / rad2deg（两者都支持 Vec）与弧度版组合
         V3 deg_in{30.0f, -15.0f, 10.0f};
-        check(approx_vec(ctk::Quat2EulerZYXDeg(ctk::EulerZYXDeg2Quat(deg_in)), deg_in, 1e-2f),
-              "Euler round trip (deg)");
+        check(approx_vec(ctk::rad2deg(ctk::Quat2EulerZYX(ctk::EulerZYX2Quat(ctk::deg2rad(deg_in)))),
+                         deg_in, 1e-2f),
+              "Euler round trip (deg via deg2rad/rad2deg)");
 
         // 编译期：四元数乘法（i * j = k）
         constexpr ctk::Quat<float> qi{0, 1, 0, 0};
