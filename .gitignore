@@ -1,0 +1,8 @@
+# 忽略CMake构建产物
+/build
+
+# 忽略 .vscode 中的所有配置文件
+.vscode/*
+# 保留 launch.json 和 settings.json
+!.vscode/launch.json
+!.vscode/settings.json
