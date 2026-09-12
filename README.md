@@ -33,9 +33,9 @@ float d = dot(a, b);                   // 自由函数，不是成员函数
 float n = norm(c);
 
 // —— 四元数（旋转）——
-Quat<float> q = EulerZYX2Quat(Vec3f{0.3f, -0.2f, 0.1f});
-Vec3f r = rotvec(q, Vec3f{1, 0, 0});   // 旋转一个向量
-Vec3f e = Quat2EulerZYX(q);
+Quat<float> q = euler_zyx2quat(Vec3f{0.3f, -0.2f, 0.1f});
+Vec3f r = quat_rotate(q, Vec3f{1, 0, 0});   // 旋转一个向量
+Vec3f e = quat2euler_zyx(q);
 
 // —— 动态模块（统一 step / reset 接口）——
 Lpf1st<double> lpf(0.001, 0.02);        // (dt, tc)
@@ -381,13 +381,13 @@ src/main.cpp     冒烟测试（覆盖全部对外接口）
 |---|---|
 | `norm_sq` / `norm` | 模长平方 / 模长 |
 | `normalize` | 归一化（零模长时返回单位四元数） |
-| `rotvec(q, v)` | 旋转三维向量（**仅单位四元数**；用两次叉乘的高效公式） |
-| `Quat2EulerZYX` / `EulerZYX2Quat` | 四元数 ↔ 欧拉角（ZYX，弧度） |
+| `quat_rotate(q, v)` | 旋转三维向量（**仅单位四元数**；用两次叉乘的高效公式） |
+| `quat2euler_zyx` / `euler_zyx2quat` | 四元数 ↔ 欧拉角（ZYX，弧度） |
 
 > 欧拉角向量顺序统一为 `[yaw, pitch, roll]`（下标 0/1/2），两个方向**互相一致**。
 >
 > **度数不单独提供函数**：用支持 `Vec` 的 `deg2rad` / `rad2deg` 与上面两个组合即可，
-> 例如 `rad2deg(Quat2EulerZYX(q))`、`EulerZYX2Quat(deg2rad(deg))`。
+> 例如 `rad2deg(quat2euler_zyx(q))`、`euler_zyx2quat(deg2rad(deg))`。
 
 **语法糖**：`Quatf` = `Quat<float>`，`Quatd` = `Quat<double>`
 

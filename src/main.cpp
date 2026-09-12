@@ -210,21 +210,21 @@ namespace
         check(id.w == 1.0f && id.x == 0.0f && id.y == 0.0f && id.z == 0.0f, "identity default");
 
         // 由欧拉角构造：绕 Z 转 90°
-        Q qz = ctk::EulerZYX2Quat(V3{half_pi, 0.0f, 0.0f});
+        Q qz = ctk::euler_zyx2quat(V3{half_pi, 0.0f, 0.0f});
         check(approx(qz.w, std::cos(half_pi / 2.0f)) && approx(qz.z, std::sin(half_pi / 2.0f)),
-              "EulerZYX2Quat (90deg about Z)");
+              "euler_zyx2quat (90deg about Z)");
 
         // 乘法：90° * 90° = 180°（w ≈ 0, z ≈ 1）
         Q q180 = qz * qz;
         check(approx(std::abs(q180.w), 0.0f) && approx(std::abs(q180.z), 1.0f), "q * q = 180deg");
 
         // 旋转矢量：(1,0,0) 绕 Z 转 90° → (0,1,0)
-        check(approx_vec(ctk::rotvec(qz, V3{1, 0, 0}), V3{0, 1, 0}), "rotvec (90deg about Z)");
+        check(approx_vec(ctk::quat_rotate(qz, V3{1, 0, 0}), V3{0, 1, 0}), "quat_rotate (90deg about Z)");
 
         // 共轭应抵消旋转
         Q qc = qz.conj();
         V3 v0{1, 2, 3};
-        check(approx_vec(ctk::rotvec(qc, ctk::rotvec(qz, v0)), v0), "conj undoes rotation");
+        check(approx_vec(ctk::quat_rotate(qc, ctk::quat_rotate(qz, v0)), v0), "conj undoes rotation");
 
         // 标量运算
         check(approx((qz * 2.0f).w, qz.w * 2.0f), "quat * scalar");
@@ -247,12 +247,12 @@ namespace
 
         // 欧拉角往返（弧度 / 度数）
         V3 euler_in{0.3f, -0.2f, 0.1f};
-        check(approx_vec(ctk::Quat2EulerZYX(ctk::EulerZYX2Quat(euler_in)), euler_in, 1e-4f),
+        check(approx_vec(ctk::quat2euler_zyx(ctk::euler_zyx2quat(euler_in)), euler_in, 1e-4f),
               "Euler round trip (rad)");
 
         // 度数版不再单列函数：用 deg2rad / rad2deg（两者都支持 Vec）与弧度版组合
         V3 deg_in{30.0f, -15.0f, 10.0f};
-        check(approx_vec(ctk::rad2deg(ctk::Quat2EulerZYX(ctk::EulerZYX2Quat(ctk::deg2rad(deg_in)))),
+        check(approx_vec(ctk::rad2deg(ctk::quat2euler_zyx(ctk::euler_zyx2quat(ctk::deg2rad(deg_in)))),
                          deg_in, 1e-2f),
               "Euler round trip (deg via deg2rad/rad2deg)");
 

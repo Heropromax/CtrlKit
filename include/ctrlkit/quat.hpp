@@ -105,7 +105,7 @@ namespace ctrlkit
     // 采用等价的高效公式：v' = v + 2w*(u × v) + 2*(u × (u × v))，u = (x, y, z) 为虚部。
     // 相比 q * v_quat * q_conj（两次四元数乘法），此处只需两次叉乘，乘法次数约减半。
     template <typename T>
-    constexpr Vec<T, 3> rotvec(const Quat<T> &q, const Vec<T, 3> &v)
+    constexpr Vec<T, 3> quat_rotate(const Quat<T> &q, const Vec<T, 3> &v)
     {
         // t = 2 * (u × v)
         const T tx = T(2) * (q.y * v[2] - q.z * v[1]);
@@ -121,7 +121,7 @@ namespace ctrlkit
 
     // 从四元数转换为欧拉角（ZYX顺序）
     template <typename T>
-    constexpr Vec<T, 3> Quat2EulerZYX(const Quat<T> &q)
+    constexpr Vec<T, 3> quat2euler_zyx(const Quat<T> &q)
     {
         T sinr_cosp = T(2) * (q.w * q.x + q.y * q.z);
         T cosr_cosp = T(1) - T(2) * (q.x * q.x + q.y * q.y);
@@ -143,7 +143,7 @@ namespace ctrlkit
 
     // 从欧拉角（ZYX顺序）转换为四元数
     template <typename T>
-    constexpr Quat<T> EulerZYX2Quat(const Vec<T, 3> &eulerZYX)
+    constexpr Quat<T> euler_zyx2quat(const Vec<T, 3> &eulerZYX)
     {
         T cy = std::cos(eulerZYX[0] * T(0.5));
         T sy = std::sin(eulerZYX[0] * T(0.5));
