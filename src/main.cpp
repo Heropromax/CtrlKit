@@ -27,8 +27,7 @@ namespace
         }
     }
 
-    template <typename T>
-    bool approx(T a, T b, T eps = T(1e-5))
+    template <typename T> bool approx(T a, T b, T eps = T(1e-5))
     {
         return std::abs(a - b) <= eps;
     }
@@ -121,6 +120,14 @@ namespace
         static_assert(std::is_same_v<ctk::scalar_t<double>, double>);
         static_assert(std::is_same_v<ctk::scalar_t<ctk::Vec<double, 4>>, double>);
 
+        // 便捷别名
+        static_assert(std::is_same_v<ctk::Vec2f, ctk::Vec<float, 2>>);
+        static_assert(std::is_same_v<ctk::Vec2d, ctk::Vec<double, 2>>);
+        static_assert(std::is_same_v<ctk::Vec3f, ctk::Vec<float, 3>>);
+        static_assert(std::is_same_v<ctk::Vec3d, ctk::Vec<double, 3>>);
+        static_assert(std::is_same_v<ctk::Vec4f, ctk::Vec<float, 4>>);
+        static_assert(std::is_same_v<ctk::Vec4d, ctk::Vec<double, 4>>);
+
         // 角度常量：变量模板 pi<T>（仅标量）与 pi_f / pi_d 常量
         static_assert(std::is_same_v<std::remove_cv_t<decltype(ctk::pi<float>)>, float>);
         static_assert(std::is_same_v<std::remove_cv_t<decltype(ctk::pi<double>)>, double>);
@@ -138,8 +145,7 @@ namespace
         // deg2rad / rad2deg：Vec（逐元素广播，三轴共用同一换算）
         const V3 deg_vec{0.0f, 90.0f, 180.0f};
         check(approx_vec(ctk::deg2rad(deg_vec), V3{0.0f, ctk::pi<float> / 2.0f, ctk::pi<float>}), "deg2rad(Vec)");
-        check(approx_vec(ctk::rad2deg(ctk::deg2rad(deg_vec)), deg_vec, 1e-3f),
-              "deg2rad/rad2deg round trip (Vec)");
+        check(approx_vec(ctk::rad2deg(ctk::deg2rad(deg_vec)), deg_vec, 1e-3f), "deg2rad/rad2deg round trip (Vec)");
 
         // 编译期求值：角度换算
         constexpr float half_turn = ctk::deg2rad(180.0f);
@@ -210,9 +216,9 @@ namespace
         check(id.w == 1.0f && id.x == 0.0f && id.y == 0.0f && id.z == 0.0f, "identity default");
 
         // 由欧拉角构造：绕 Z 转 90°
-        Q qz = ctk::euler_zyx2quat(V3{half_pi, 0.0f, 0.0f});
+        Q qz = ctk::euler2quat_zyx(V3{half_pi, 0.0f, 0.0f});
         check(approx(qz.w, std::cos(half_pi / 2.0f)) && approx(qz.z, std::sin(half_pi / 2.0f)),
-              "euler_zyx2quat (90deg about Z)");
+              "euler2quat_zyx (90deg about Z)");
 
         // 乘法：90° * 90° = 180°（w ≈ 0, z ≈ 1）
         Q q180 = qz * qz;
@@ -247,13 +253,12 @@ namespace
 
         // 欧拉角往返（弧度 / 度数）
         V3 euler_in{0.3f, -0.2f, 0.1f};
-        check(approx_vec(ctk::quat2euler_zyx(ctk::euler_zyx2quat(euler_in)), euler_in, 1e-4f),
+        check(approx_vec(ctk::quat2euler_zyx(ctk::euler2quat_zyx(euler_in)), euler_in, 1e-4f),
               "Euler round trip (rad)");
 
         // 度数版不再单列函数：用 deg2rad / rad2deg（两者都支持 Vec）与弧度版组合
         V3 deg_in{30.0f, -15.0f, 10.0f};
-        check(approx_vec(ctk::rad2deg(ctk::quat2euler_zyx(ctk::euler_zyx2quat(ctk::deg2rad(deg_in)))),
-                         deg_in, 1e-2f),
+        check(approx_vec(ctk::rad2deg(ctk::quat2euler_zyx(ctk::euler2quat_zyx(ctk::deg2rad(deg_in)))), deg_in, 1e-2f),
               "Euler round trip (deg via deg2rad/rad2deg)");
 
         // 编译期：四元数乘法（i * j = k）
@@ -320,16 +325,14 @@ namespace
         check(approx_vec(vf3.step(V3{1.0f, 2.0f, 3.0f}), V3{1.0f, 2.0f, 3.0f}), "vec initial_output");
 
         // 滤波器可用 constexpr 构造与求值（在 constexpr 函数内使用非 const 局部对象）
-        constexpr double first_step = []
-        {
+        constexpr double first_step = [] {
             ctk::Lpf1st<double> f(0.01, 0.1);
             return f.step(1.0);
         }();
         static_assert(first_step > 0.0 && first_step < 1.0);
 
         // 初始输出同样可用于编译期
-        constexpr double init_step = []
-        {
+        constexpr double init_step = [] {
             ctk::Lpf1st<double> f(0.5, 0.5, 1.0);
             return f.step(0.0);
         }();
@@ -378,8 +381,7 @@ namespace
         check(approx_vec(out, V3{2.0f, 4.0f, -6.0f}), "vec: per-axis integration");
 
         // 编译期可用
-        constexpr double acc = []
-        {
+        constexpr double acc = [] {
             ctk::Integrator<double> it(0.5);
             it.step(2.0);
             it.step(2.0);
@@ -458,6 +460,107 @@ namespace
         check(approx_vec(out, V3{1.0f, 2.0f, 3.0f}, 1e-4f), "vec: DC gain = 1 on all axes");
     }
 
+    // =========================== saturate ===========================
+    void test_saturate()
+    {
+        using V3 = ctk::Vec<float, 3>;
+        std::println("[saturate]");
+
+        // 逐元素限幅：区间内保持，越界夹到边界
+        check(ctk::saturate(V3{-2.0f, 0.5f, 3.0f}, -1.0f, 2.0f) == (V3{-1.0f, 0.5f, 2.0f}),
+              "vec saturate to [min, max]");
+
+        // 全部高于 max
+        check(ctk::saturate(V3{5.0f, 6.0f, 7.0f}, 0.0f, 1.0f) == (V3{1.0f, 1.0f, 1.0f}), "vec saturate all above max");
+
+        // 全部低于 min
+        check(ctk::saturate(V3{-5.0f, -6.0f, -7.0f}, -1.0f, 1.0f) == (V3{-1.0f, -1.0f, -1.0f}),
+              "vec saturate all below min");
+
+        // 退化区间 min == max：全部夹到同一值
+        check(ctk::saturate(V3{-2.0f, 0.5f, 3.0f}, 1.0f, 1.0f) == (V3{1.0f, 1.0f, 1.0f}),
+              "vec saturate degenerate range");
+
+        // 任意维度都适用（此处 4D, double）
+        using V4 = ctk::Vec<double, 4>;
+        check(ctk::saturate(V4{-1.0, 0.0, 0.5, 2.0}, 0.0, 1.0) == (V4{0.0, 0.0, 0.5, 1.0}), "vec saturate 4D");
+
+        // 标量限幅
+        check(ctk::saturate(5.0, -1.0, 1.0) == 1.0, "scalar saturate above max");
+        check(ctk::saturate(-5.0, -1.0, 1.0) == -1.0, "scalar saturate below min");
+        check(ctk::saturate(0.5, -1.0, 1.0) == 0.5, "scalar saturate within range");
+
+        // 编译期可用
+        constexpr V3 cv = ctk::saturate(V3{-2.0f, 0.5f, 3.0f}, -1.0f, 2.0f);
+        static_assert(cv == V3{-1.0f, 0.5f, 2.0f});
+        static_assert(ctk::saturate(5.0, -1.0, 1.0) == 1.0);
+    }
+
+    // ======================= IntegratorSat =======================
+    void test_integrator_sat()
+    {
+        using V3 = ctk::Vec<float, 3>;
+        std::println("[IntegratorSat]");
+
+        // 标量：未饱和时与普通积分器一致：n 步后 = n * input * dt
+        ctk::IntegratorSat<double> s1(0.5, 0.0, -100.0, 100.0);
+        double y = 0.0;
+        for (int k = 0; k < 10; ++k)
+            y = s1.step(2.0);
+        check(approx(y, 10.0 * 2.0 * 0.5), "scalar: accumulates when within limits");
+
+        // 标量：正向饱和到 sat_max 后保持不变
+        ctk::IntegratorSat<double> s2(0.5, 0.0, -1.0, 1.0);
+        check(approx(s2.step(2.0), 1.0), "scalar: saturates at max");
+        check(approx(s2.step(2.0), 1.0), "scalar: stays at max");
+
+        // 标量：负向饱和到 sat_min
+        ctk::IntegratorSat<double> s3(0.5, 0.0, -1.0, 1.0);
+        check(approx(s3.step(-2.0), -1.0), "scalar: saturates at min");
+        check(approx(s3.step(-2.0), -1.0), "scalar: stays at min");
+
+        // 标量：默认饱和界限为 Scalar 的 lowest/max → 实际不饱和
+        ctk::IntegratorSat<double> s4(1.0);
+        check(approx(s4.step(1e300), 1e300), "scalar: default limits do not saturate");
+
+        // 标量：非零初值参与积分
+        ctk::IntegratorSat<double> s5(0.5, 5.0, -100.0, 100.0);
+        check(approx(s5.step(0.0), 5.0), "scalar: initial state");
+
+        // 标量：reset 会把越界值夹到边界
+        ctk::IntegratorSat<double> s6(0.5, 0.0, -1.0, 1.0);
+        s6.reset(10.0);
+        check(approx(s6.step(0.0), 1.0), "scalar: reset clamps to max");
+        s6.reset(-10.0);
+        check(approx(s6.step(0.0), -1.0), "scalar: reset clamps to min");
+
+        // 标量：构造时传入的越界初值会在首次 step 被夹住
+        ctk::IntegratorSat<double> s7(0.5, 10.0, -1.0, 1.0);
+        check(approx(s7.step(0.0), 1.0), "scalar: out-of-range initial state clamped on step");
+
+        // 向量：逐轴独立积分并各自饱和
+        ctk::IntegratorSat<V3> vs(0.5f, V3{}, -1.0f, 1.0f);
+        const V3 vin{4.0f, 0.5f, -4.0f};
+        V3 out{};
+        for (int k = 0; k < 4; ++k)
+            out = vs.step(vin);
+        check(approx_vec(out, V3{1.0f, 1.0f, -1.0f}), "vec: per-axis saturation");
+
+        // 向量：reset 逐轴夹取
+        ctk::IntegratorSat<V3> vs2(0.5f, V3{}, -1.0f, 1.0f);
+        vs2.reset(V3{5.0f, 0.0f, -5.0f});
+        check(approx_vec(vs2.step(V3{}), V3{1.0f, 0.0f, -1.0f}), "vec: reset clamps per axis");
+
+        // 编译期可用
+        constexpr double acc = [] {
+            ctk::IntegratorSat<double> it(0.5, 0.0, -1.0, 1.0);
+            it.step(2.0);
+            it.step(2.0);
+            return it.step(2.0);
+        }();
+        static_assert(acc == 1.0);
+    }
+
     // =========================== math.hpp ===========================
     void test_math()
     {
@@ -487,7 +590,7 @@ namespace
         // 因此 math.hpp 中虽然标了 constexpr，也只能运行期求值（见审核说明）。
         check(ctk::sin(V3{0.0f, 0.0f, 0.0f})[1] == 0.0f, "sin(0) == 0");
     }
-}
+} // namespace
 
 int main()
 {
@@ -499,6 +602,8 @@ int main()
     test_lpf();
     test_lpf2();
     test_integrator();
+    test_integrator_sat();
+    test_saturate();
     test_math();
 
     std::println("=======================");

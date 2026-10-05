@@ -1,0 +1,8 @@
+# 微软预设：自动自带 4 格缩进、Allman
+BasedOnStyle: Microsoft
+
+# 避免短函数被折叠到单行
+AllowShortFunctionsOnASingleLine: None
+
+# 保留Namespace缩进
+NamespaceIndentation: All

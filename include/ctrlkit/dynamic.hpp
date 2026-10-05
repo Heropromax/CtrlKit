@@ -10,10 +10,9 @@ namespace ctrlkit
     // 一阶低通滤波器（一阶指数平滑）
     // T：信号类型，可以是标量（float / double）或 Vec<...>。
     // 系数（dt、tc、alpha）统一使用 scalar_t<T>：所有轴共用同一个 alpha。
-    template <typename T>
-    class Lpf1st
+    template <typename T> class Lpf1st
     {
-    public:
+      public:
         using Scalar = scalar_t<T>;
 
         // 构造函数，传入采样周期 dt 和时间常数 tc（均为标量）可选的初始输出值 initial_output（默认为零）
@@ -36,15 +35,14 @@ namespace ctrlkit
             prev_output = value;
         }
 
-    private:
+      private:
         Scalar alpha;
         T prev_output;
     };
 
-    template <typename T>
-    class Lpf2nd
+    template <typename T> class Lpf2nd
     {
-    public:
+      public:
         using Scalar = scalar_t<T>;
 
         // 构造函数：传入采样周期 dt (s)、截止频率 fc (Hz)、阻尼比 zeta (默认 0.7071f Butterworth) 与初始输出
@@ -88,7 +86,7 @@ namespace ctrlkit
             s2 = value * (b2 - a2);
         }
 
-    private:
+      private:
         // 标量系数
         Scalar b0{1}, b1{0}, b2{0};
         Scalar a1{0}, a2{0};
@@ -99,13 +97,11 @@ namespace ctrlkit
     };
 
     // 积分器
-    template <typename T>
-    class Integrator
+    template <typename T> class Integrator
     {
-    public:
+      public:
         using Scalar = scalar_t<T>;
 
-        // 构造函数，传入采样周期 dt（标量）
         constexpr Integrator(Scalar dt, const T &initial_state = T{})
         {
             this->dt = dt;
@@ -125,9 +121,50 @@ namespace ctrlkit
             state = value;
         }
 
-    private:
+      private:
         Scalar dt;
         T state;
     };
 
-}
+    // 积分器（带饱和限制）
+    template <typename T> class IntegratorSat
+    {
+      public:
+        using Scalar = scalar_t<T>;
+
+        constexpr IntegratorSat(Scalar dt, const T &initial_state = T{},
+                                const Scalar &sat_min = std::numeric_limits<Scalar>::lowest(),
+                                const Scalar &sat_max = std::numeric_limits<Scalar>::max())
+        {
+            this->dt = dt;
+            state = initial_state;
+
+            this->sat_min = sat_min;
+            this->sat_max = sat_max;
+        }
+
+        // 更新积分器，传入当前输入值，返回积分后的输出值
+        constexpr T step(const T &input)
+        {
+            state += input * dt;
+
+            state = saturate(state, sat_min, sat_max);
+
+            return state;
+        }
+
+        // 重置积分器状态
+        constexpr void reset(const T &value = T{})
+        {
+            state = saturate(value, sat_min, sat_max);
+        }
+
+      private:
+        Scalar dt;
+        T state;
+
+        Scalar sat_min;
+        Scalar sat_max;
+    };
+
+} // namespace ctrlkit

@@ -2,13 +2,19 @@
 
 > **一句话定位**：一个**极简、头文件式、专注实时控制**的 C++20+ 数学与动态模块库。
 > 用于作者作为机器人领域全栈工程师从事高性能控制系统开发逐步从MATLAB Simulink 生态中解放出来，脑子里像MBD写起来像Pytorch的模块化编程
+>
 > 在嵌入式（STM32/ESP32等）或者Windows/Linux上部署，无任何动态内存分配，确定执行时间，最大程度编译器静态优化
+>
 > 适合无人机飞控/云台/机械臂/电机控制/逆变器/等任何在CPU上运行的实时控制应用
+>
 > AI 编程极度友好
+>
 > 只提供"积木"，不替用户搭系统。这是一个实时控制库，不是仿真环境，不会有模拟器和Solver
+>
 > 未来会提供配套设施用于信号可视化，仿真等等，并且配合Mujoco/Julia MTK（不会体现在CtrlKit 里面，库会保证小而美，作为外围配套设施环境，例如一个开发环境）
 >
 > 编译/环境配置请看 `EnvGuide.md`，本文只讲**设计意图、现状与路线图**。
+>
 > 编译器地板：**GCC ≥ 12 / Clang ≥ 14 / MSVC VS2022**（与目标架构无关）。完整支持范围、迁移路径与「非目标」见 §1.15。
 >
 > ⚠️ **本库尚未到 1.0，公开 API 会变动**（迭代方式见 §1.13）。
@@ -33,7 +39,7 @@ float d = dot(a, b);                   // 自由函数，不是成员函数
 float n = norm(c);
 
 // —— 四元数（旋转）——
-Quat<float> q = euler_zyx2quat(Vec3f{0.3f, -0.2f, 0.1f});
+Quat<float> q = euler2quat_zyx(Vec3f{0.3f, -0.2f, 0.1f});
 Vec3f r = quat_rotate(q, Vec3f{1, 0, 0});   // 旋转一个向量
 Vec3f e = quat2euler_zyx(q);
 
@@ -73,7 +79,7 @@ double s = integ.step(y);
 |---|---|
 | **避免类接口膨胀** | `Vec` 成员的职责边界清晰=运算符+数据；加 20 个数学函数会变成"上帝类" |
 | **降低耦合** | 自由函数只依赖 `Vec` 的**公开数据/运算符**，不依赖内部实现，实现可自由改 |
-| **可扩展** | 新增能力（`sin`、未来的 `clamp`）不需要改 `Vec` 的定义 |
+| **可扩展** | 新增能力（`sin`、未来的 `saturate`）不需要改 `Vec` 的定义 |
 | **可读性** | `dot(a, b)` / `norm(v)` 比 `a.dot(b)` 更接近数学记法 |
 | **ADL 可用** | 自由函数在 `ctrlkit` 命名空间里，`sin(v)` 直接就能找到，无需写 `ctk::` |
 
@@ -382,12 +388,12 @@ src/main.cpp     冒烟测试（覆盖全部对外接口）
 | `norm_sq` / `norm` | 模长平方 / 模长 |
 | `normalize` | 归一化（零模长时返回单位四元数） |
 | `quat_rotate(q, v)` | 旋转三维向量（**仅单位四元数**；用两次叉乘的高效公式） |
-| `quat2euler_zyx` / `euler_zyx2quat` | 四元数 ↔ 欧拉角（ZYX，弧度） |
+| `quat2euler_zyx` / `euler2quat_zyx` | 四元数 ↔ 欧拉角（ZYX，弧度） |
 
 > 欧拉角向量顺序统一为 `[yaw, pitch, roll]`（下标 0/1/2），两个方向**互相一致**。
 >
 > **度数不单独提供函数**：用支持 `Vec` 的 `deg2rad` / `rad2deg` 与上面两个组合即可，
-> 例如 `rad2deg(quat2euler_zyx(q))`、`euler_zyx2quat(deg2rad(deg))`。
+> 例如 `rad2deg(quat2euler_zyx(q))`、`euler2quat_zyx(deg2rad(deg))`。
 
 **语法糖**：`Quatf` = `Quat<float>`，`Quatd` = `Quat<double>`
 
@@ -424,7 +430,7 @@ src/main.cpp     冒烟测试（覆盖全部对外接口）
 |---|---|
 | **`Saturation`（限幅）** | 执行器指令保护，最基础也最必需 |
 | **`IntegratorLimit`** | 带**输出限幅**的积分器（anti-windup 地基） |
-| **基础数学工具** | `abs`、`sign`、`clamp`、`min`、`max`、`sqrt`、`pow`（先这些，不够再添） |
+| **基础数学工具** | `abs`、`sign`、`saturate`、`min`、`max`、`sqrt`、`pow`（先这些，不够再添） |
 | **微分模块（Derivative）** | 见下方说明 —— PID 只差这一块 |
 
 > **关于 PID**：**本库不提供 PID**。

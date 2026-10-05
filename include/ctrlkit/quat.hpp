@@ -79,6 +79,10 @@ namespace ctrlkit
         }
     };
 
+}
+
+namespace ctrlkit
+{
     template <typename T>
     constexpr T norm_sq(const Quat<T> &q)
     {
@@ -91,14 +95,15 @@ namespace ctrlkit
         return std::sqrt(norm_sq(q));
     }
 
-    // 四元数归一化（若模长为零，则返回单位四元数）
+    // 四元数归一化（若模长小于1e-2，则返回单位四元数）
     template <typename T>
     constexpr Quat<T> normalize(const Quat<T> &q)
     {
         T n = norm(q);
-        if (n == T(0))
-            return Quat<T>{1, 0, 0, 0}; // 返回单位四元数
-        return Quat<T>{q.w / n, q.x / n, q.y / n, q.z / n};
+        if (n < T(1e-2)) // 如果模长过小，则返回单位四元数，避免除以零
+            return Quat<T>{1, 0, 0, 0};
+        T inv_n = T(1.0) / n;
+        return Quat<T>{q.w * inv_n, q.x * inv_n, q.y * inv_n, q.z * inv_n};
     }
 
     // 四元数旋转矢量（仅支持三维向量和单位四元数）
@@ -143,7 +148,7 @@ namespace ctrlkit
 
     // 从欧拉角（ZYX顺序）转换为四元数
     template <typename T>
-    constexpr Quat<T> euler_zyx2quat(const Vec<T, 3> &eulerZYX)
+    constexpr Quat<T> euler2quat_zyx(const Vec<T, 3> &eulerZYX)
     {
         T cy = std::cos(eulerZYX[0] * T(0.5));
         T sy = std::sin(eulerZYX[0] * T(0.5));
@@ -158,7 +163,6 @@ namespace ctrlkit
             cr * sp * cy + sr * cp * sy,
             cr * cp * sy - sr * sp * cy};
     }
-
 }
 
 namespace ctrlkit

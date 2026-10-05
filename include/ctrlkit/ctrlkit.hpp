@@ -1,21 +1,27 @@
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <concepts>
 #include <numbers>
 #include <type_traits>
 
-namespace ctrlkit
+namespace ctrlkit // 基础类型定义
 {
-    template <typename T, unsigned int N>
-    struct Vec
+    template <typename T, unsigned int N> struct Vec
     {
         static_assert(N >= 2, "CtrlKit: Vec dimension must be at least 2");
         T data[N] = {};
 
         // 2. 像普通数组一样读写数据：vec[0] = 1.0f;
-        constexpr T &operator[](unsigned int i) { return data[i]; }
-        constexpr const T &operator[](unsigned int i) const { return data[i]; }
+        constexpr T &operator[](unsigned int i)
+        {
+            return data[i];
+        }
+        constexpr const T &operator[](unsigned int i) const
+        {
+            return data[i];
+        }
 
         // ------------------ 向量四则运算
 
@@ -208,8 +214,7 @@ namespace ctrlkit
         // （float->int 会截断，与标量语义一致）。
         // 标记 explicit：既能用 static_cast 显式触发，又不会引入隐式转换带来的重载歧义，
         // 且转换运算符不是构造函数，故 Vec 仍保持聚合类型。
-        template <typename U>
-        constexpr explicit operator Vec<U, N>() const
+        template <typename U> constexpr explicit operator Vec<U, N>() const
         {
             Vec<U, N> res{};
             for (unsigned int i = 0; i < N; ++i)
@@ -221,28 +226,27 @@ namespace ctrlkit
     // ------------------ 标量类型萃取（scalar_of / scalar_t）
 
     // 主模板：标量类型（float、double 等）的标量即其自身
-    template <typename T>
-    struct scalar_of
+    template <typename T> struct scalar_of
     {
         using type = T;
     };
 
     // 偏特化：向量的标量是其元素类型
-    template <typename U, unsigned int N>
-    struct scalar_of<Vec<U, N>>
+    template <typename U, unsigned int N> struct scalar_of<Vec<U, N>>
     {
         using type = U;
     };
 
     // 对外别名：scalar_t<T>，调用处无需再写 typename / ::type
-    template <typename T>
-    using scalar_t = typename scalar_of<T>::type;
+    template <typename T> using scalar_t = typename scalar_of<T>::type;
 
-    // ------------------ 向量运算的自由函数
+} // namespace ctrlkit
+
+namespace ctrlkit // 工具函数定义
+{
 
     // 向量和
-    template <typename T, unsigned int N>
-    constexpr T sum(const Vec<T, N> &vec)
+    template <typename T, unsigned int N> constexpr T sum(const Vec<T, N> &vec)
     {
         T s = 0;
         for (unsigned int i = 0; i < N; ++i)
@@ -251,44 +255,62 @@ namespace ctrlkit
     }
 
     // 向量点积
-    template <typename T, unsigned int N>
-    constexpr T dot(const Vec<T, N> &lhs, const Vec<T, N> &rhs)
+    template <typename T, unsigned int N> constexpr T dot(const Vec<T, N> &lhs, const Vec<T, N> &rhs)
     {
         return sum(lhs * rhs);
     }
 
     // 向量模长平方
-    template <typename T, unsigned int N>
-    constexpr T norm_sq(const Vec<T, N> &vec)
+    template <typename T, unsigned int N> constexpr T norm_sq(const Vec<T, N> &vec)
     {
         return dot(vec, vec);
     }
 
     // 向量模长
-    template <typename T, unsigned int N>
-    constexpr T norm(const Vec<T, N> &vec)
+    template <typename T, unsigned int N> constexpr T norm(const Vec<T, N> &vec)
     {
         return std::sqrt(dot(vec, vec));
     }
 
     // 向量叉乘（仅支持三维向量）
-    template <typename T>
-    constexpr Vec<T, 3> cross(const Vec<T, 3> &lhs, const Vec<T, 3> &rhs)
+    template <typename T> constexpr Vec<T, 3> cross(const Vec<T, 3> &lhs, const Vec<T, 3> &rhs)
     {
-        return Vec<T, 3>{
-            lhs[1] * rhs[2] - lhs[2] * rhs[1],
-            lhs[2] * rhs[0] - lhs[0] * rhs[2],
-            lhs[0] * rhs[1] - lhs[1] * rhs[0]};
+        return Vec<T, 3>{lhs[1] * rhs[2] - lhs[2] * rhs[1], lhs[2] * rhs[0] - lhs[0] * rhs[2],
+                         lhs[0] * rhs[1] - lhs[1] * rhs[0]};
     }
 
-}
+    // 饱和函数（向量）：将向量的每个元素限制在 [min_val, max_val] 范围内
+    template <typename T, unsigned int N>
+    constexpr Vec<T, N> saturate(const Vec<T, N> &vec, const T &min_val, const T &max_val)
+    {
+        Vec<T, N> res;
+        for (unsigned int i = 0; i < N; ++i)
+        {
+            res[i] = std::clamp(vec[i], min_val, max_val);
+        }
+        return res;
+    }
 
-namespace ctrlkit
+    // 饱和函数（标量）：将标量限制在 [min_val, max_val] 范围内
+    template <typename T> constexpr T saturate(const T &value, const T &min_val, const T &max_val)
+    {
+        return std::clamp(value, min_val, max_val);
+    }
+
+} // namespace ctrlkit
+
+namespace ctrlkit // 语法糖和快捷函数
 {
     // ------------------ 语法糖，只对外使用， 对内依旧使用稳定的std 库
 
+    using Vec2f = Vec<float, 2>;
+    using Vec2d = Vec<double, 2>;
+
     using Vec3f = Vec<float, 3>;
     using Vec3d = Vec<double, 3>;
+
+    using Vec4f = Vec<float, 4>;
+    using Vec4d = Vec<double, 4>;
 
     // 目前支持两种pi定义，看那种用的爽后续确定API
 
@@ -301,22 +323,21 @@ namespace ctrlkit
     constexpr float pi_f = std::numbers::pi_v<float>;
     constexpr double pi_d = std::numbers::pi_v<double>;
 
-    template <typename T>
-    constexpr T deg2rad(T deg)
+    template <typename T> constexpr T deg2rad(T deg)
     {
         using Scalar = scalar_t<T>;
         static_assert(std::is_floating_point_v<Scalar>, "deg2rad: T must be a floating-point type");
         return deg * std::numbers::pi_v<Scalar> / Scalar(180);
     }
 
-    template <typename T>
-    constexpr T rad2deg(T rad)
+    template <typename T> constexpr T rad2deg(T rad)
     {
         using Scalar = scalar_t<T>;
         static_assert(std::is_floating_point_v<Scalar>, "rad2deg: T must be a floating-point type");
         return rad * Scalar(180) / std::numbers::pi_v<Scalar>;
     }
 
-}
+} // namespace ctrlkit
 
-namespace ctk = ctrlkit;
+// ctrlkit:: 对外简写
+namespace ctk = ctrlkit; // NOLINT(misc-unused-alias-decls)

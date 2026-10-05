@@ -5,9 +5,12 @@ project(CppApp)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-## 👉 选择 cmake使用的编译器和平台 Ctrl + Shift + P -> CMake: Select a Kit
-## 👉 选择 release 或 debug 模式：Ctrl + Shift + P -> CMake: Select a Variant
-## 👉 选择要测试/Debug的程序: Ctrl + Shift + P -> CMake: Set Launch/Debug Target
+# 输出compile_commands.json 配合clangd
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON) 
+
+## 选择 cmake使用的编译器和平台 Ctrl + Shift + P -> CMake: Select a Kit
+## 选择 release 或 debug 模式：Ctrl + Shift + P -> CMake: Select a Variant
+## 选择要测试/Debug的程序: Ctrl + Shift + P -> CMake: Set Launch/Debug Target
 
 # 告诉编译器使用 UTF-8 编码
 if (MSVC)

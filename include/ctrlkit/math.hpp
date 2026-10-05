@@ -8,8 +8,7 @@ namespace ctrlkit
 {
     // ------------------ 三角函数
 
-    template <typename T, unsigned int N>
-    constexpr Vec<T, N> sin(const Vec<T, N> &x)
+    template <typename T, unsigned int N> constexpr Vec<T, N> sin(const Vec<T, N> &x)
     {
         Vec<T, N> result;
         for (unsigned int i = 0; i < N; ++i)
@@ -17,8 +16,7 @@ namespace ctrlkit
         return result;
     }
 
-    template <typename T, unsigned int N>
-    constexpr Vec<T, N> cos(const Vec<T, N> &x)
+    template <typename T, unsigned int N> constexpr Vec<T, N> cos(const Vec<T, N> &x)
     {
         Vec<T, N> result;
         for (unsigned int i = 0; i < N; ++i)
@@ -26,8 +24,7 @@ namespace ctrlkit
         return result;
     }
 
-    template <typename T, unsigned int N>
-    constexpr Vec<T, N> tan(const Vec<T, N> &x)
+    template <typename T, unsigned int N> constexpr Vec<T, N> tan(const Vec<T, N> &x)
     {
         Vec<T, N> result;
         for (unsigned int i = 0; i < N; ++i)
@@ -35,8 +32,7 @@ namespace ctrlkit
         return result;
     }
 
-    template <typename T, unsigned int N>
-    constexpr Vec<T, N> asin(const Vec<T, N> &x)
+    template <typename T, unsigned int N> constexpr Vec<T, N> asin(const Vec<T, N> &x)
     {
         Vec<T, N> result;
         for (unsigned int i = 0; i < N; ++i)
@@ -44,8 +40,7 @@ namespace ctrlkit
         return result;
     }
 
-    template <typename T, unsigned int N>
-    constexpr Vec<T, N> acos(const Vec<T, N> &x)
+    template <typename T, unsigned int N> constexpr Vec<T, N> acos(const Vec<T, N> &x)
     {
         Vec<T, N> result;
         for (unsigned int i = 0; i < N; ++i)
@@ -53,8 +48,7 @@ namespace ctrlkit
         return result;
     }
 
-    template <typename T, unsigned int N>
-    constexpr Vec<T, N> atan(const Vec<T, N> &x)
+    template <typename T, unsigned int N> constexpr Vec<T, N> atan(const Vec<T, N> &x)
     {
         Vec<T, N> result;
         for (unsigned int i = 0; i < N; ++i)
@@ -64,8 +58,7 @@ namespace ctrlkit
 
     // ------------------ 指数与对数
 
-    template <typename T, unsigned int N>
-    constexpr Vec<T, N> exp(const Vec<T, N> &x)
+    template <typename T, unsigned int N> constexpr Vec<T, N> exp(const Vec<T, N> &x)
     {
         Vec<T, N> result;
         for (unsigned int i = 0; i < N; ++i)
@@ -73,8 +66,7 @@ namespace ctrlkit
         return result;
     }
 
-    template <typename T, unsigned int N>
-    constexpr Vec<T, N> log(const Vec<T, N> &x)
+    template <typename T, unsigned int N> constexpr Vec<T, N> log(const Vec<T, N> &x)
     {
         Vec<T, N> result;
         for (unsigned int i = 0; i < N; ++i)
@@ -82,4 +74,6 @@ namespace ctrlkit
         return result;
     }
 
-}
+    // TODO: pow函数，包含pow(Vec, scalar_float) pow(Vec, scalar_integer)
+
+} // namespace ctrlkit
