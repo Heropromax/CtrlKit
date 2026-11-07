@@ -10,7 +10,8 @@ namespace ctrlkit
     // 一阶低通滤波器（一阶指数平滑）
     // T：信号类型，可以是标量（float / double）或 Vec<...>。
     // 系数（dt、tc、alpha）统一使用 scalar_t<T>：所有轴共用同一个 alpha。
-    template <typename T> class Lpf1st
+    template <typename T>
+    class Lpf1st
     {
       public:
         using Scalar = scalar_t<T>;
@@ -40,24 +41,25 @@ namespace ctrlkit
         T prev_output;
     };
 
-    template <typename T> class Lpf2nd
+    template <typename T>
+    class Lpf2nd
     {
       public:
         using Scalar = scalar_t<T>;
 
         // 构造函数：传入采样周期 dt (s)、截止频率 fc (Hz)、阻尼比 zeta (默认 0.7071f Butterworth) 与初始输出
-        Lpf2nd(Scalar dt, Scalar fc, Scalar zeta = Scalar(0.7071), const T &initial_output = T{})
+        constexpr Lpf2nd(Scalar dt, Scalar fc, Scalar zeta = Scalar(0.7071), const T &initial_output = T{})
         {
-            // 1. 频偏预畸变计算 (Pre-warping)
+            // 频偏预畸变计算 (Pre-warping)
             // K = tan(pi * fc * dt)
             const Scalar K = std::tan(std::numbers::pi_v<Scalar> * fc * dt);
             const Scalar K2 = K * K;
             const Scalar two_zeta_K = Scalar(2) * zeta * K;
 
-            // 2. 双线性变换归一化分母
+            // 双线性变换归一化分母
             const Scalar norm = Scalar(1) / (Scalar(1) + two_zeta_K + K2);
 
-            // 3. 离散差分方程系数 (符合 y[n] + a1*y[n-1] + a2*y[n-2] = b0*x[n] + b1*x[n-1] + b2*x[n-2])
+            // 离散差分方程系数 (符合 y[n] + a1*y[n-1] + a2*y[n-2] = b0*x[n] + b1*x[n-1] + b2*x[n-2])
             b0 = K2 * norm;
             b1 = Scalar(2) * b0;
             b2 = b0;
@@ -65,7 +67,7 @@ namespace ctrlkit
             a1 = Scalar(2) * (K2 - Scalar(1)) * norm;
             a2 = (Scalar(1) - two_zeta_K + K2) * norm;
 
-            // 4. 对齐初始稳态
+            // 对齐初始稳态
             reset(initial_output);
         }
 
@@ -97,7 +99,8 @@ namespace ctrlkit
     };
 
     // 积分器
-    template <typename T> class Integrator
+    template <typename T>
+    class Integrator
     {
       public:
         using Scalar = scalar_t<T>;
@@ -127,7 +130,8 @@ namespace ctrlkit
     };
 
     // 积分器（带饱和限制）
-    template <typename T> class IntegratorSat
+    template <typename T>
+    class IntegratorSat
     {
       public:
         using Scalar = scalar_t<T>;

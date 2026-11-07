@@ -27,7 +27,8 @@ namespace
         }
     }
 
-    template <typename T> bool approx(T a, T b, T eps = T(1e-5))
+    template <typename T>
+    bool approx(T a, T b, T eps = T(1e-5))
     {
         return std::abs(a - b) <= eps;
     }
@@ -589,6 +590,19 @@ namespace
         // 注：MSVC 的 std::sin / std::log 等目前不是 constexpr 函数，
         // 因此 math.hpp 中虽然标了 constexpr，也只能运行期求值（见审核说明）。
         check(ctk::sin(V3{0.0f, 0.0f, 0.0f})[1] == 0.0f, "sin(0) == 0");
+
+        // pow：编译期整数指数（模板参数，展开为纯乘法，且可在常量表达式求值）
+        constexpr V3 base{2.0f, 3.0f, 4.0f};
+        static_assert(ctk::pow<2>(base)[1] == 9.0f, "pow<2> constexpr");
+        static_assert(ctk::pow<-1>(base)[2] == 0.25f, "pow<-1> constexpr");
+        check(approx_vec(ctk::pow<2>(base), V3{4.0f, 9.0f, 16.0f}), "pow<2>");
+        check(approx_vec(ctk::pow<0>(base), V3{1.0f, 1.0f, 1.0f}), "pow<0>");
+        check(approx_vec(ctk::pow<1>(base), base), "pow<1>");
+        check(approx_vec(ctk::pow<-1>(base), V3{0.5f, 1.0f / 3.0f, 0.25f}, 1e-6f), "pow<-1>");
+        check(approx_vec(ctk::pow<-2>(base), V3{0.25f, 1.0f / 9.0f, 1.0f / 16.0f}, 1e-6f), "pow<-2>");
+
+        // pow：运行期浮点指数（走 std::pow）
+        check(approx_vec(ctk::pow(V3{4.0f, 9.0f, 16.0f}, 0.5f), V3{2.0f, 3.0f, 4.0f}, 1e-6f), "pow(vec, 0.5f)");
     }
 } // namespace
 

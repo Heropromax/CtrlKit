@@ -1,8 +1,14 @@
 # 微软预设：自动自带 4 格缩进、Allman
 BasedOnStyle: Microsoft
 
+# 保留头文件原有顺序
+SortIncludes: Never
+
 # 避免短函数被折叠到单行
 AllowShortFunctionsOnASingleLine: None
 
 # 保留Namespace缩进
 NamespaceIndentation: All
+
+# 保留模板声明折行
+AlwaysBreakTemplateDeclarations: Yes

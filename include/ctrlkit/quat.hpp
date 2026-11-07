@@ -21,11 +21,8 @@ namespace ctrlkit
         // 四元数乘法
         constexpr Quat operator*(const Quat &rhs) const
         {
-            return Quat{
-                w * rhs.w - x * rhs.x - y * rhs.y - z * rhs.z,
-                w * rhs.x + x * rhs.w + y * rhs.z - z * rhs.y,
-                w * rhs.y - x * rhs.z + y * rhs.w + z * rhs.x,
-                w * rhs.z + x * rhs.y - y * rhs.x + z * rhs.w};
+            return Quat{w * rhs.w - x * rhs.x - y * rhs.y - z * rhs.z, w * rhs.x + x * rhs.w + y * rhs.z - z * rhs.y,
+                        w * rhs.y - x * rhs.z + y * rhs.w + z * rhs.x, w * rhs.z + x * rhs.y - y * rhs.x + z * rhs.w};
         }
 
         // 四元数与标量乘法
@@ -79,7 +76,7 @@ namespace ctrlkit
         }
     };
 
-}
+} // namespace ctrlkit
 
 namespace ctrlkit
 {
@@ -118,10 +115,8 @@ namespace ctrlkit
         const T tz = T(2) * (q.x * v[1] - q.y * v[0]);
 
         // v' = v + w * t + (u × t)
-        return Vec<T, 3>{
-            v[0] + q.w * tx + (q.y * tz - q.z * ty),
-            v[1] + q.w * ty + (q.z * tx - q.x * tz),
-            v[2] + q.w * tz + (q.x * ty - q.y * tx)};
+        return Vec<T, 3>{v[0] + q.w * tx + (q.y * tz - q.z * ty), v[1] + q.w * ty + (q.z * tx - q.x * tz),
+                         v[2] + q.w * tz + (q.x * ty - q.y * tx)};
     }
 
     // 从四元数转换为欧拉角（ZYX顺序）
@@ -157,13 +152,10 @@ namespace ctrlkit
         T cr = std::cos(eulerZYX[2] * T(0.5));
         T sr = std::sin(eulerZYX[2] * T(0.5));
 
-        return Quat<T>{
-            cr * cp * cy + sr * sp * sy,
-            sr * cp * cy - cr * sp * sy,
-            cr * sp * cy + sr * cp * sy,
-            cr * cp * sy - sr * sp * cy};
+        return Quat<T>{cr * cp * cy + sr * sp * sy, sr * cp * cy - cr * sp * sy, cr * sp * cy + sr * cp * sy,
+                       cr * cp * sy - sr * sp * cy};
     }
-}
+} // namespace ctrlkit
 
 namespace ctrlkit
 {
@@ -171,4 +163,4 @@ namespace ctrlkit
     using Quatf = Quat<float>;
     using Quatd = Quat<double>;
 
-}
+} // namespace ctrlkit
